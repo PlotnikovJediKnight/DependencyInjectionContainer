@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DependencyInjectionContainer
 {
-    class DependenciesConfiguration
+    public class DependenciesConfiguration
     {
         private readonly Dictionary<Type, List<Dependency>> _dependencies = new Dictionary<Type, List<Dependency>>();
 

@@ -1,4 +1,4 @@
-﻿using DependencyInjectionContainer.Exception;
+﻿using DependencyInjectionContainer.CustomExceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
