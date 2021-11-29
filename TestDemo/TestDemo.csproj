@@ -5,4 +5,18 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Reference Include="TestsProject">
+      <HintPath>..\..\FakerProject\Faker\bin\Debug\TestsProject.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ClassesUnderTest\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DependencyInjectionContainer\DependencyInjectionContainer.csproj" />
+  </ItemGroup>
+
 </Project>
