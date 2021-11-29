@@ -19,11 +19,13 @@ namespace TestDemo
             var configuration = new DependenciesConfiguration();
             configuration.Register<IRepository, MyRepository>();
             configuration.Register<IService<IRepository>, ServiceImpl1<IRepository>>();
+
             var container = new DependencyProvider(configuration);
             var repository = container.Resolve<IRepository>();
             var service = container.Resolve<IService<IRepository>>();
-            Assert(repository.GetType().Equals(typeof(MyRepository)), "types should be equal!");
-            Assert(service.GetType().Equals(typeof(ServiceImpl1<IRepository>)), "bla");
+
+            Assert(repository.GetType().Equals(typeof(MyRepository)), "MyRepository type was expected!");
+            Assert(service.GetType().Equals(typeof(ServiceImpl1<IRepository>)), "ServiceImpl1<IRepository> type was expected!");
         }
 
         static void SingletonTest()
@@ -32,6 +34,7 @@ namespace TestDemo
             configuration.Register(typeof(IRepository), typeof(MyRepository));
             configuration.Register(typeof(IService<>), typeof(ServiceImpl1<>), LifeCycle.Singleton, "1");
             configuration.Register(typeof(IService<>), typeof(ServiceImpl1<>), LifeCycle.InstancePerDependency, "2");
+
             var container = new DependencyProvider(configuration);
             var serviceImpl1 = container.Resolve<IService<IRepository>>("1");
             var serviceImpl2 = container.Resolve<IService<IRepository>>("2");
@@ -39,8 +42,8 @@ namespace TestDemo
             var serviceImpl11 = container.Resolve<IService<IRepository>>("1");
             var serviceImpl22 = container.Resolve<IService<IRepository>>("2");
 
-            Assert(serviceImpl1 == serviceImpl11, "dfg");
-            Assert(serviceImpl2 != serviceImpl22, "dfg");
+            Assert(serviceImpl1 == serviceImpl11, "The very same object was expected! (Singleton)");
+            Assert(serviceImpl2 != serviceImpl22, "A newly created object was expected! (InstancePerDependency)");
         }
 
         static void BaseInterfaceTest()
@@ -48,10 +51,11 @@ namespace TestDemo
             var configuration = new DependenciesConfiguration();
             configuration.Register(typeof(IRepository), typeof(MyRepository));
             configuration.Register<IBaseService, ServiceImpl1<IRepository>>();
+
             var container = new DependencyProvider(configuration);
             var service = container.Resolve<IBaseService>();
 
-            Assert(service.GetType().Equals(typeof(ServiceImpl1<IRepository>)), "types should be equal!");
+            Assert(service.GetType().Equals(typeof(ServiceImpl1<IRepository>)), "ServiceImpl1<IRepository> was expected!");
         }
 
         static void ListOfDependenciesWithOpenGenericsTest()
@@ -59,13 +63,13 @@ namespace TestDemo
             var configuration = new DependenciesConfiguration();
             configuration.Register(typeof(IRepository), typeof(MyRepository));
             configuration.Register(typeof(IRepository), typeof(SomeRepository));
+
             var container = new DependencyProvider(configuration);
             var services = container.Resolve<IEnumerable<IRepository>>().ToList();
 
-            AssertEqual(services.Count, 2, "dfg");
-
-            Assert(services[0].GetType().Equals(typeof(MyRepository)), "types should be equal!");
-            Assert(services[1].GetType().Equals(typeof(SomeRepository)), "types should be equal!");
+            AssertEqual(services.Count, 2, "IRepository is supposed to be wired up against 2 implementations! (open generics)");
+            Assert(services[0].GetType().Equals(typeof(MyRepository)), "First implementation has to be MyRepository!");
+            Assert(services[1].GetType().Equals(typeof(SomeRepository)), "Second implementation has to be SomeRepository!");
         }
 
         static void ListOfDependenciesTest()
@@ -73,13 +77,13 @@ namespace TestDemo
             var configuration = new DependenciesConfiguration();
             configuration.Register<IRepository, MyRepository>();
             configuration.Register<IRepository, SomeRepository>();
+
             var container = new DependencyProvider(configuration);
             var services = container.Resolve<IEnumerable<IRepository>>().ToList();
 
             AssertEqual(services.Count, 2, "asdf");
-
-            Assert(services[0].GetType().Equals(typeof(MyRepository)), "types should be equal!");
-            Assert(services[1].GetType().Equals(typeof(SomeRepository)), "types should be equal!");
+            Assert(services[0].GetType().Equals(typeof(MyRepository)), "IRepository is supposed to be wired up against 2 implementations! (open generics)");
+            Assert(services[1].GetType().Equals(typeof(SomeRepository)), "Second implementation has to be SomeRepository");
         }
 
         static void RecursionTest()
@@ -94,7 +98,7 @@ namespace TestDemo
             }
             catch(DependencyException e)
             {
-                Console.WriteLine("Caught!!!");
+                Console.WriteLine("Class mapping to itself has been evaded!");
             }
         }
 
@@ -111,7 +115,7 @@ namespace TestDemo
             }
             catch (DependencyException e)
             {
-                Console.WriteLine("Caught!!! 1");
+                Console.WriteLine("Cyclic dependency has been evaded! (Class1)");
             }
 
             try
@@ -120,23 +124,23 @@ namespace TestDemo
             }
             catch (DependencyException e)
             {
-                Console.WriteLine("Caught!!! 2");
+                Console.WriteLine("Cyclic dependency has been evaded! (Class2)");
             }
         }
 
         static void WrongIdTest()
         {
             var configuration = new DependenciesConfiguration();
-            configuration.Register<IRepository, MyRepository>("kek");
+            configuration.Register<IRepository, MyRepository>("SuchAUniqueAndTotallyUnexpectedNameWhoWhouldveThought");
             var container = new DependencyProvider(configuration);
 
             try
             {
-                container.Resolve<IRepository>("wrong");
+                container.Resolve<IRepository>("wrongName");
             }
             catch (DependencyException e)
             {
-                Console.WriteLine("Caught!!! 1");
+                Console.WriteLine("Unexpected name has been intercepted!");
             }
 
         }
@@ -145,10 +149,11 @@ namespace TestDemo
         {
             var configuration = new DependenciesConfiguration();
             configuration.Register<IRepository, MyRepository>("my");
+
             var container = new DependencyProvider(configuration);
             var repository = container.Resolve<IRepository>("my");
 
-            Assert(repository.GetType().Equals(typeof(MyRepository)), "types should be equal!");
+            Assert(repository.GetType().Equals(typeof(MyRepository)), "Resolution by name has not been successful!");
         }
 
         static void ProvidedAttributeTest()
@@ -157,11 +162,12 @@ namespace TestDemo
             configuration.Register<IRepository, MyRepository>();
             configuration.Register<IRepository, MyAnotherRepository>("yes");
             configuration.Register<IService<IRepository>, ServiceImpl3<IRepository>>();
+
             var container = new DependencyProvider(configuration);
             var service = container.Resolve<IService<IRepository>>();
 
-            Assert(service.GetType().Equals(typeof(ServiceImpl3<IRepository>)), "types should be equal!");
-            Assert( ((ServiceImpl3<IRepository>)service).Repository.GetType().Equals(typeof(MyAnotherRepository)), "asdfg");
+            Assert(service.GetType().Equals(typeof(ServiceImpl3<IRepository>)), "ServiceImpl3<IRepository>");
+            Assert( ((ServiceImpl3<IRepository>)service).Repository.GetType().Equals(typeof(MyAnotherRepository)), "Named dependency failed!");
         }
 
         static void Main(string[] args)
