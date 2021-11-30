@@ -33,6 +33,17 @@ namespace DependencyInjectionContainer
             return (TInterface)Resolve(typeof(TInterface), name);
         }
 
+        public object Resolve(Type @interface, object key = null)
+        {
+            if (typeof(IEnumerable).IsAssignableFrom(@interface))
+            {
+                return ResolveAll(@interface.GetGenericArguments()[0]);
+            }
+            var dependency = GetDependency(@interface, key);
+
+            return ResolveDependency(dependency);
+        }
+
         public IEnumerable<T> ResolveAll<T>()
             where T : class
         {
@@ -59,8 +70,9 @@ namespace DependencyInjectionContainer
         private object ResolveDependency(Dependency dependency)
         {
             if (_dependencyConfiguration.IsExcluded(dependency.Type))
-                throw new DependencyException($"Dependency type {dependency.Type} leads recursion!");
+                throw new DependencyException($"Dependency type {dependency.Type} leads to recursion!");
             _dependencyConfiguration.ExcludeType(dependency.Type);
+
             object result = null;
             if (dependency.LifeCycle == LifeCycle.InstancePerDependency)
             {
@@ -114,27 +126,22 @@ namespace DependencyInjectionContainer
                     genericDependency.Instance = Creator.CreateInstance(genericType, _dependencyConfiguration);
                 }
                 
-                var tempGenericDependency = new Dependency(genericType, genericDependency.LifeCycle, genericDependency.Key) { Instance = genericDependency.Instance };
+                var tempGenericDependency = new Dependency(genericType, genericDependency.LifeCycle, genericDependency.Key)
+                { 
+                    Instance = genericDependency.Instance 
+                };
+
                 return tempGenericDependency;
             }
+
             if (key != null) return GetNamedDependency(@interface, key);
+
             if (_dependencyConfiguration.TryGet(@interface, out var dependency))
             {
                 return dependency;
             }
 
             throw new DependencyException($"Dependency for type {@interface} is not registered");
-        }
-
-        public object Resolve(Type @interface, object key = null)
-        {
-            if (typeof(IEnumerable).IsAssignableFrom(@interface))
-            {
-                return ResolveAll(@interface.GetGenericArguments()[0]);
-            }
-            var dependency = GetDependency(@interface, key);
-
-            return ResolveDependency(dependency);
         }
     }
 }

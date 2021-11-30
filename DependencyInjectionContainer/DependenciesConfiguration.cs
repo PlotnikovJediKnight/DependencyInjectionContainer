@@ -33,14 +33,28 @@ namespace DependencyInjectionContainer
             Register(typeof(TInterface), typeof(TImplementation), LifeCycle.InstancePerDependency, name);
         }
 
-        public void Register<TInterface, TImplementation>(LifeCycle lifeType, object name)
+        public void Register<TInterface, TImplementation>(LifeCycle lifeCycle, object name)
             where TInterface : class
             where TImplementation : class, TInterface
         {
-            Register(typeof(TInterface), typeof(TImplementation), lifeType, name);
+            Register(typeof(TInterface), typeof(TImplementation), lifeCycle, name);
         }
 
-        public void Register(Type @interface, Type implementation, LifeCycle lifeType = LifeCycle.InstancePerDependency, object name = null)
+        public void Register<TInterface, TImplementation>(LifeCycle lifeCycle = LifeCycle.InstancePerDependency)
+            where TInterface : class
+            where TImplementation : class, TInterface
+        {
+            Register(typeof(TInterface), typeof(TImplementation), lifeCycle);
+        }
+
+        public void RegisterSingleton<TInterface, TImplementation>()
+            where TInterface : class
+            where TImplementation : class, TInterface
+        {
+            Register(typeof(TInterface), typeof(TImplementation), LifeCycle.Singleton);
+        }
+
+        public void Register(Type @interface, Type implementation, LifeCycle lifeCycle = LifeCycle.InstancePerDependency, object name = null)
         {
             if (@interface == null) throw new ArgumentNullException(nameof(@interface));
             if (implementation == null) throw new ArgumentNullException(nameof(implementation));
@@ -51,7 +65,7 @@ namespace DependencyInjectionContainer
                 implementation.IsGenericTypeDefinition && @interface.IsGenericTypeDefinition &&
                  IsAssignableFromGeneric(implementation, @interface))
             {
-                var dependency = new Dependency(implementation, lifeType, name);
+                var dependency = new Dependency(implementation, lifeCycle, name);
                 if (_dependencies.ContainsKey(@interface))
                 {
                     _dependencies[@interface].Add(dependency);
@@ -89,20 +103,6 @@ namespace DependencyInjectionContainer
             return baseTypes
                 .Select(GetTypeDefinition)
                 .Contains(GetTypeDefinition(interfaceType));
-        }
-
-        public void Register<TInterface, TImplementation>(LifeCycle lifeType = LifeCycle.InstancePerDependency)
-            where TInterface : class
-            where TImplementation : class, TInterface
-        {
-            Register(typeof(TInterface), typeof(TImplementation), lifeType);
-        }
-
-        public void RegisterSingleton<TInterface, TImplementation>()
-            where TInterface : class
-            where TImplementation : class, TInterface
-        {
-            Register(typeof(TInterface), typeof(TImplementation), LifeCycle.Singleton);
         }
 
         public bool TryGet(Type @interface, out Dependency dependency)
